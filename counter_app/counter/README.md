@@ -1,0 +1,1 @@
+A simple counter app that increases or decreases on click by users. This app is developed using React functional components with hooks (useState) to implement a clean UI with proper styling (tailwind).
