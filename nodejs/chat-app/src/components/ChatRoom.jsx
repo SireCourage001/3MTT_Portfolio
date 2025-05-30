@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
+import axios from 'axios';
 
 const socket = io('http://localhost:5000'); // Connect to backend
 
@@ -9,21 +10,35 @@ function ChatRoom() {
   const [chat, setChat] = useState([]);
 
   useEffect(() => {
+    // Fetch messages from backend API
+    const fetchMessages = async () => {
+      try {
+        const res = await axios.get('http://localhost:5000/api/messages');
+        setChat(res.data); // Load message history
+      } catch (err) {
+        console.error('Error loading messages:', err);
+      }
+    };
+
+    fetchMessages();
+
+    // Socket listener
     socket.on('chat message', (msg) => {
       setChat((prevChat) => [...prevChat, msg]);
     });
 
-    // Clean up on component unmount
     return () => socket.off('chat message');
   }, []);
 
   const sendMessage = (e) => {
     e.preventDefault();
     if (username.trim() && message.trim()) {
-      socket.emit('chat message', {
+      const msgObj = {
         username,
         message,
-      });
+        timestamp: new Date(),
+      };
+      socket.emit('chat message', msgObj);
       setMessage('');
     }
   };
@@ -55,7 +70,8 @@ function ChatRoom() {
         <ul style={{ listStyleType: 'none', padding: 0 }}>
           {chat.map((msg, idx) => (
             <li key={idx} style={{ padding: 5 }}>
-              <strong>{msg.username}:</strong> {msg.message}
+              <strong>{msg.username}:</strong> {msg.message} <br />
+              <small>{new Date(msg.timestamp).toLocaleTimeString()}</small>
             </li>
           ))}
         </ul>
